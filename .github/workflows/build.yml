@@ -27,6 +27,11 @@ jobs:
         with:
           python-version: "3.12"
       - name: Generate calendar
+        # Set repo variable POGO_TZ (Settings -> Secrets and variables -> Actions
+        # -> Variables) to change the feed's timezone without editing code.
+        # Falls back to the default in generate.py when unset.
+        env:
+          POGO_TZ: ${{ vars.POGO_TZ }}
         run: python generate.py
       - name: Configure Pages
         uses: actions/configure-pages@v5

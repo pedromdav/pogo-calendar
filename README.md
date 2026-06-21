@@ -16,9 +16,8 @@ ScrapedDuck events.json  ──>  generate.py  ──>  public/calendar.ics  ─
 ```
 
 - `generate.py` — stdlib-only Python. Fetches events, filters to the types you
-  care about, and writes `public/calendar.ics`. Times are emitted as *floating*
-  (no timezone) so events land at the right local time wherever you are — which
-  is exactly how Pokémon GO event times work.
+  care about, and writes `public/calendar.ics`, pinned to a timezone (default
+  `Europe/Zurich`) with that zone's daylight-saving rules embedded.
 - `.github/workflows/build.yml` — runs on push + a twice-daily cron, regenerates
   the feed, and deploys `public/` to GitHub Pages.
 
@@ -65,8 +64,34 @@ Edit the `INCLUDE` dict at the top of `generate.py`. Each key is a Leek Duck
 Other available types include `pokemon-spotlight-hour`, `go-battle-league`,
 `season`, `go-pass`, `choose-your-path`. Add any of them to `INCLUDE` to track them.
 
+## Timezone & travelling
+
+Pokémon GO events like Community Days and Raid Hours happen at the same
+wall-clock time in **every** local timezone (a 14:00 Community Day is 14:00
+wherever you are). The truly "follows you as you travel" representation is a
+*floating* time — which **Apple/iPhone Calendar honours**, but **Google Calendar
+does not** (it misreads floating times as UTC and shifts them). So this feed pins
+to one concrete timezone instead.
+
+The default is `Europe/Zurich`. To use another zone:
+
+```sh
+python3 generate.py --tz America/New_York   # or: POGO_TZ=America/New_York python3 generate.py
+```
+
+**When you travel**, repoint the hosted feed to your current zone without editing
+code: set a repo variable `POGO_TZ` (Settings → Secrets and variables → Actions →
+Variables) to e.g. `Asia/Tokyo`, then re-run the workflow (Actions tab → Run
+workflow). The feed rebuilds in the new zone; your subscription picks it up on its
+next refresh. Set it back when you return home.
+
+> Tip: if you use **Apple Calendar** as your main app, ping me and I can switch
+> the generator to floating times instead — then events follow your travel
+> automatically with no timezone juggling.
+
 ## Run locally
 
 ```sh
-python3 generate.py   # writes public/calendar.ics
+python3 generate.py                  # default timezone
+python3 generate.py --tz Asia/Tokyo  # any IANA timezone
 ```
