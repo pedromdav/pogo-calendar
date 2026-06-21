@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pokémon GO Events Calendar</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        max-width: 38rem; margin: 4rem auto; padding: 0 1.25rem; line-height: 1.6;
+      }
+      code {
+        background: rgba(127, 127, 127, 0.18); padding: 0.15em 0.4em; border-radius: 4px;
+        word-break: break-all;
+      }
+      a { color: #2563eb; }
+      .btn {
+        display: inline-block; margin-top: 1rem; padding: 0.6rem 1.1rem;
+        background: #2563eb; color: white; border-radius: 8px; text-decoration: none;
+      }
+      ol { padding-left: 1.2rem; }
+    </style>
+  </head>
+  <body>
+    <h1>🗓️ Pokémon GO Events Calendar</h1>
+    <p>
+      A subscribable calendar feed of Community Days, big events, and raids —
+      auto-refreshed twice daily from
+      <a href="https://leekduck.com/events/">Leek Duck</a>.
+    </p>
+
+    <p><a class="btn" href="./calendar.ics">Download / open the feed</a></p>
+
+    <h2>Subscribe in Google Calendar</h2>
+    <ol>
+      <li>Copy this feed URL: <br /><code id="feedurl">calendar.ics</code></li>
+      <li>
+        In Google Calendar → <strong>Other calendars</strong> (＋) →
+        <strong>From URL</strong>.
+      </li>
+      <li>Paste the URL and click <strong>Add calendar</strong>.</li>
+    </ol>
+    <p>
+      On iPhone: Settings → Calendar → Accounts → Add Account → Other →
+      Add Subscribed Calendar, then paste the same URL.
+    </p>
+
+    <script>
+      // Show the absolute feed URL so it can be copied directly.
+      document.getElementById("feedurl").textContent =
+        new URL("calendar.ics", location.href).href;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,4 @@
+# The .ics is generated at build time (by CI and locally); no need to commit it.
+public/calendar.ics
+__pycache__/
+*.pyc
