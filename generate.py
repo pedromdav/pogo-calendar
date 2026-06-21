@@ -36,16 +36,12 @@ DEFAULT_TIMEZONE = "Europe/Zurich"
 
 # Which Leek Duck eventTypes to include, mapped to a friendly emoji prefix that
 # shows up in the calendar event title. Edit this dict to change what you track.
-#   - Community Days & big events
-#   - Raids (incl. raid hours)
+# Starting lean: just Community Days and GO Fest. Other types you can add back:
+#   "raid-battles" / "raid-hour" / "raid-day" (raids), "event" (general events),
+#   "pokemon-spotlight-hour", "max-mondays", "go-battle-league".
 INCLUDE = {
     "community-day": "🌟",
-    "raid-battles": "⚔️",
-    "raid-hour": "⚔️",
-    "raid-day": "⚔️",
-    "max-mondays": "⚔️",
     "pokemon-go-fest": "🎉",
-    "event": "📅",
 }
 
 # Default duration when an event has no end time.
