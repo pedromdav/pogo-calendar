@@ -4,8 +4,7 @@ on:
   push:
     branches: [main]
   schedule:
-    # Twice a day (06:00 and 18:00 UTC) so the feed stays fresh.
-    - cron: "0 6,18 * * *"
+    - cron: '0 6,18 * * *'
   workflow_dispatch: {}
 
 permissions:
@@ -13,7 +12,6 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment.
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -22,23 +20,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: '3.14.6'
       - name: Generate calendar
-        # Set repo variable POGO_TZ (Settings -> Secrets and variables -> Actions
-        # -> Variables) to change the feed's timezone without editing code.
+        # Set repo variable POGO_TZ (Settings -> Secrets and variables -> Actions -> Variables)
+        # to change the feed's timezone without editing code.
         # Falls back to the default in generate.py when unset.
         env:
           POGO_TZ: ${{ vars.POGO_TZ }}
         run: python generate.py
       - name: Configure Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: public
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
