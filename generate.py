@@ -1,20 +1,3 @@
-#!/usr/bin/env python3
-"""Build a subscribable .ics calendar of Pokemon GO events.
-
-Data comes from ScrapedDuck (a community-maintained JSON mirror of Leek Duck).
-No third-party dependencies: stdlib only, so it runs anywhere (incl. CI).
-
-Times in the source are *naive local times* (e.g. 14:00 with no timezone),
-which is correct for Pokemon GO -- Community Days, Raid Hours, etc. happen at
-the same wall-clock time in every player's local timezone. We pin the feed to a
-chosen IANA timezone (default below) and embed that zone's DST rules as a
-VTIMEZONE, because Google Calendar misreads timezone-less times as UTC.
-
-Set the timezone with `--tz America/New_York` or the POGO_TZ env var (handy when
-travelling: switch zones and rebuild). The embedded rules are derived from the
-system tz database, so any IANA zone works.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -29,16 +12,11 @@ from zoneinfo import ZoneInfo
 SOURCE_URL = "https://raw.githubusercontent.com/bigfoott/ScrapedDuck/data/events.json"
 OUTPUT = Path(__file__).parent / "public" / "calendar.ics"
 
-CALENDAR_NAME = "Pokemon GO Events"
+CALENDAR_NAME = "Pokémon GO Events"
 
 # Timezone the feed is pinned to. Override with --tz or the POGO_TZ env var.
 DEFAULT_TIMEZONE = "Europe/Zurich"
 
-# Which Leek Duck eventTypes to include, mapped to a friendly emoji prefix that
-# shows up in the calendar event title. Edit this dict to change what you track.
-# Starting lean: just Community Days and GO Fest. Other types you can add back:
-#   "raid-battles" / "raid-hour" / "raid-day" (raids), "event" (general events),
-#   "pokemon-spotlight-hour", "max-mondays", "go-battle-league".
 INCLUDE = {
     "community-day": "🌟",
     "pokemon-go-fest": "🎉",
@@ -129,8 +107,10 @@ def build_vtimezone(tzid: str) -> list[str]:
 
     def describe(instant: datetime) -> tuple[timedelta, str, bool]:
         loc = instant.astimezone(tz)
+        off = loc.utcoffset()
+        assert off is not None  # always set on a tz-aware datetime
         is_dst = bool(loc.dst()) and loc.dst() != timedelta(0)
-        return loc.utcoffset(), loc.tzname() or tzid, is_dst
+        return off, loc.tzname() or tzid, is_dst
 
     off, name, is_dst = describe(cur)
     subs: list[dict] = [
@@ -179,7 +159,7 @@ def build_ics(events: list[dict], tzid: str) -> str:
     lines: list[str] = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//pogo-calendar//Pokemon GO Events//EN",
+        "PRODID:-//pogo-calendar//Pokémon GO Events//EN",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
         f"X-WR-CALNAME:{escape(CALENDAR_NAME)}",
@@ -190,24 +170,24 @@ def build_ics(events: list[dict], tzid: str) -> str:
     lines += build_vtimezone(tzid)
 
     kept = 0
-    for ev in events:
-        etype = ev.get("eventType")
+    for event in events:
+        etype = event.get("eventType")
         if etype not in INCLUDE:
             continue
-        start = parse_dt(ev.get("start"))
+        start = parse_dt(event.get("start"))
         if start is None:
             continue
-        end = parse_dt(ev.get("end")) or (start + DEFAULT_DURATION)
+        end = parse_dt(event.get("end")) or (start + DEFAULT_DURATION)
         if end <= start:
             end = start + DEFAULT_DURATION
 
         emoji = INCLUDE[etype]
-        name = ev.get("name", "Pokemon GO Event")
+        name = event.get("name", "Pokémon GO Event")
         title = f"{emoji} {name}"
 
-        uid = ev.get("eventID") or f"{name}-{fmt_dt(start)}"
-        link = ev.get("link", "")
-        heading = ev.get("heading", "")
+        uid = event.get("eventID") or f"{name}-{fmt_dt(start)}"
+        link = event.get("link", "")
+        heading = event.get("heading", "")
         desc_parts = [p for p in (heading, link) if p]
         description = "\\n".join(escape(p) for p in desc_parts)
 
@@ -232,7 +212,9 @@ def build_ics(events: list[dict], tzid: str) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build the Pokemon GO events .ics feed.")
+    parser = argparse.ArgumentParser(
+        description="Build the Pokémon GO Events .ics feed."
+    )
     parser.add_argument(
         "--tz",
         default=os.environ.get("POGO_TZ") or DEFAULT_TIMEZONE,
@@ -242,13 +224,16 @@ def main() -> int:
 
     try:
         ZoneInfo(args.tz)
-    except Exception:  # noqa: BLE001
-        print(f"Unknown timezone: {args.tz!r} (use an IANA name, e.g. America/New_York)", file=sys.stderr)
+    except (ValueError, TypeError):
+        print(
+            f"Unknown timezone: {args.tz!r} (use an IANA name, e.g. America/New_York)",
+            file=sys.stderr,
+        )
         return 2
 
     try:
         events = fetch_events()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print(f"Failed to fetch events: {exc}", file=sys.stderr)
         return 1
 
